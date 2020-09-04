@@ -1,5 +1,7 @@
 from in_toto.models.link import Link
 from in_toto.models.metadata import Metablock
+import requests
+import json
 
 
 class GrafeasLink:
@@ -40,17 +42,37 @@ class GrafeasLink:
 
 
 class GrafeasInTotoOccurrence:
-  signatures = []
-  signed = None
+  note_name = None
+  kind = "INTOTO"
+  resource = {
+    "uri": None
+  }
+  intoto = {
+    signatures:  [],
+    signed: None
+  }
 
-  def __init__(self, in_toto_link):
-    self.signed = GrafeasLink(in_toto_link["signed"]["materials"],
-                              in_toto_link["signed"]["products"],
-                              in_toto_link["signed"]["command"],
-                              in_toto_link["signed"]["byproducts"],
-                              in_toto_link["signed"]["environment"])
+  def __init__(self, in_toto_link, note_name, resource_uri):
+    self.intoto["signed"] = GrafeasLink(in_toto_link["signed"]["materials"],
+                                        in_toto_link["signed"]["products"],
+                                        in_toto_link["signed"]["command"],
+                                        in_toto_link["signed"]["byproducts"],
+                                        in_toto_link["signed"]["environment"])
 
-    self.signatures = in_toto_link["signatures"]
+    self.intoto["signatures"] = in_toto_link["signatures"]
+
+    self.note_name = note_name
+
+    self.resource["uri"] = resource_uri
+
+  def to_json(self):
+    return json.dumps({
+        "resource": self.resource,
+        "noteName": self.note_name,
+        "kind": self.kind,
+        "intoto": self.intoto
+      }
+    )
 
 
 def create_grafeas_occurrence_from_in_toto_link(in_toto_link):
@@ -91,3 +113,16 @@ def create_in_toto_link_from_grafeas_occurrence(grafeas_occurrence, step_name):
   in_toto_link =  Link(name=step_name, materials=materials, products=products, byproducts=byproducts, command=command, environment=environment)
 
   return Metablock(signed=in_toto_link, signatures=grafeas_occurrence.signatures)
+
+
+class GrafeasInTotoTransport:
+  server_url = None
+
+  def __init__(self, server_url):
+    self.server_url = server_url
+
+  def dispatch(self, in_toto_link, note_name, resource_uri):
+    grafeas_occurrence = GrafeasInTotoOccurrence(in_toto_link, note_name,
+                                                 resource_uri)
+
+    response = requests.post(self.server_url, data=grafeas_occurrence.to_json())
