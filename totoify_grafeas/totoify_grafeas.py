@@ -94,23 +94,23 @@ def create_in_toto_link_from_grafeas_occurrence(grafeas_occurrence, step_name):
 
   command = grafeas_occurrence.signed.command
 
-  for key, value in byproducts.items():
+  for key, value in grafeas_occurrence.signed.byproducts.items():
     if key == "custom_values":
       continue
     byproducts[key] = value
 
-  for key, value in byproducts["custom_values"].items():
+  for key, value in grafeas_occurrence.signed.byproducts["custom_values"].items():
     byproducts[key] = value
 
-  for key, value in environment.items():
+  for key, value in grafeas_occurrence.signed.environment.items():
     if key == "custom_values":
       continue
     environment[key] = value
 
-  for key, value in environment["custom_values"].items():
+  for key, value in grafeas_occurrence.signed.environment["custom_values"].items():
     environment[key] = value
-  
-  in_toto_link =  Link(name=step_name, materials=materials, products=products, byproducts=byproducts, command=command, environment=environment)
+
+  in_toto_link = Link(name=step_name, materials=materials, products=products, byproducts=byproducts, command=command, environment=environment)
 
   return Metablock(signed=in_toto_link, signatures=grafeas_occurrence.signatures)
 
@@ -122,7 +122,7 @@ class GrafeasInTotoTransport:
     self.server_url = server_url
 
   def dispatch(self, in_toto_link, note_name, resource_uri):
-    grafeas_occurrence = GrafeasInTotoOccurrence(in_toto_link, note_name,
-                                                 resource_uri)
+    grafeas_occurrence = GrafeasInTotoOccurrence(
+        in_toto_link, note_name, resource_uri)
 
     response = requests.post(self.server_url, data=grafeas_occurrence.to_json())
