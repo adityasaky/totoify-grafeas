@@ -48,8 +48,8 @@ class GrafeasInTotoOccurrence:
     "uri": None
   }
   intoto = {
-    signatures:  [],
-    signed: None
+    "signatures":  [],
+    "signed": None
   }
 
   def __init__(self, in_toto_link, note_name, resource_uri):
